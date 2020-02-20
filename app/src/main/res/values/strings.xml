@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">抖音刷视频</string>
+    <string name="server_name">抖音刷视频服务</string>
+    <string name="accessibility_service_description">用于抖音视频自动化智能刷新视频，签到服务.</string>
+</resources>
