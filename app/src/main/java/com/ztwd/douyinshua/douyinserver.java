@@ -1,16 +1,22 @@
 package com.ztwd.douyinshua;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.GestureDescription;
 import android.content.Intent;
+import android.graphics.Path;
+import android.os.Build;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
-import java.io.DataOutputStream;
-import java.io.OutputStream;
+import androidx.annotation.RequiresApi;
+
 import java.util.List;
 
+import static com.ztwd.douyinshua.AccessibilityHelper.execShellCmd;
+import static com.ztwd.douyinshua.AccessibilityHelper.sleepTime;
+import static com.ztwd.douyinshua.AccessibilityHelper.upgradeRootPermission;
 import static com.ztwd.douyinshua.StringTimeUtils.getTimeStr2;
 
 /**
@@ -25,7 +31,7 @@ import static com.ztwd.douyinshua.StringTimeUtils.getTimeStr2;
 public class douyinserver extends AccessibilityService {
     private final static String TAG = "douyinserver";
     private boolean msroot;
-
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 //注意这个方法回调，是在主线程，不要在这里执行耗时操作
@@ -49,10 +55,16 @@ public class douyinserver extends AccessibilityService {
                                     Log.i(TAG, "使用ADB命令滑动成功.");
                                     return;
                                 } else {
-                                    List<AccessibilityNodeInfo> a40 = rootNode.findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme.lite:id/bg");//整个视频页面
-                                    if (a40 != null && !a40.isEmpty()) {
+                                    if(Build.VERSION.SDK_INT>=24) {
                                         Log.i(TAG, "使用自带模拟滑动");
+                                        Path path = new Path();
+                                        path.moveTo(800, 2200);
+                                        path.lineTo(800, 400);
+                                        GestureDescription.StrokeDescription sd = new GestureDescription.StrokeDescription(path, 0, 200);
+                                        dispatchGesture(new GestureDescription.Builder().addStroke(sd).build(), null, null);
                                         return;
+                                    }else {
+
                                     }
                                 }
                             }
@@ -62,103 +74,6 @@ public class douyinserver extends AccessibilityService {
                 break;
             case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
                 break;
-        }
-    }
-    /**
-     * 根据id,获取AccessibilityNodeInfo，并点击。
-     */
-    private void ClickId(String id) {
-        AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
-        if (nodeInfo != null) {
-            List<AccessibilityNodeInfo> list = nodeInfo.findAccessibilityNodeInfosByViewId(id);
-            for (AccessibilityNodeInfo item : list) {
-                item.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-            }
-        }
-    }
-    /**
-     * 应用程序运行命令获取 Root权限，设备必须已破解(获得ROOT权限)
-     *
-     * @return 应用程序是/否获取Root权限
-     */
-    public boolean upgradeRootPermission(String pkgCodePath) {
-        Process process = null;
-        DataOutputStream os = null;
-        try {
-            String cmd="chmod 777 " + pkgCodePath;
-            process = Runtime.getRuntime().exec("su"); //切换到root帐号
-            os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            process.waitFor();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            try {
-                if (os != null) {
-                    os.close();
-                }
-                process.destroy();
-            } catch (Exception e) {
-            }
-        }
-        try {
-            return process.waitFor()==0;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    /**
-     * 回到系统桌面
-     */
-    private void back2Home() {
-        Intent home = new Intent(Intent.ACTION_MAIN);
-        home.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        home.addCategory(Intent.CATEGORY_HOME);
-        startActivity(home);
-    }
-    /**
-     * 延时MS
-     */
-    public static void sleepTime(int ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-    /**
-     * 模拟返回操作
-     */
-    public void performBackClick() {
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        performGlobalAction(GLOBAL_ACTION_BACK);
-    }
-    /**
-     * 执行shell命令
-     *
-     execShellCmd("input tap 168 252");点击某坐标
-     execShellCmd("input swipe 100 250 200 280"); 滑动坐标
-     */
-    public static void execShellCmd(String cmd) {
-        try {
-            // 申请获取root权限，这一步很重要，不然会没有作用
-            Process process = Runtime.getRuntime().exec("su");
-            // 获取输出流
-            OutputStream outputStream = process.getOutputStream();
-            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-            dataOutputStream.writeBytes(cmd);
-            dataOutputStream.flush();
-            dataOutputStream.close();
-            outputStream.close();
-        } catch (Throwable t) {
-            t.printStackTrace();
         }
     }
     /**
