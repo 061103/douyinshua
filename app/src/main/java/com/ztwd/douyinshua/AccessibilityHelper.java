@@ -357,7 +357,6 @@ public class AccessibilityHelper {
         }
         return nodeInfo.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
     }
-
     //粘贴
     @TargetApi(18)
     public static void performPaste(AccessibilityNodeInfo nodeInfo) {

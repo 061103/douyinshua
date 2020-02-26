@@ -10,8 +10,6 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
-
 import java.util.List;
 
 import static com.ztwd.douyinshua.AccessibilityHelper.execShellCmd;
@@ -31,7 +29,7 @@ import static com.ztwd.douyinshua.StringTimeUtils.getTimeStr2;
 public class douyinserver extends AccessibilityService {
     private final static String TAG = "douyinserver";
     private boolean msroot;
-    @RequiresApi(api = Build.VERSION_CODES.N)
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 //注意这个方法回调，是在主线程，不要在这里执行耗时操作
@@ -47,32 +45,28 @@ public class douyinserver extends AccessibilityService {
                             int ran = (int) (Math.random() * 20);//产生随机数
                             int wait_sleep = ran * 1000;
                             if (wait_sleep > 3000) {//最少停留页面3秒
-                                Log.i(TAG, "延时：" + wait_sleep + "毫秒！");
+                                Log.i(TAG, "延时：" + wait_sleep/1000 + "秒！");
                                 sleepTime(wait_sleep);
                                 Log.i(TAG, "延时完成准备滑动");
-                                if (msroot) {
-                                    execShellCmd("input swipe 800 2200 800 400"); //滑动坐标
-                                    Log.i(TAG, "使用ADB命令滑动成功.");
-                                    return;
-                                } else {
-                                    if(Build.VERSION.SDK_INT>=24) {
-                                        Log.i(TAG, "使用自带模拟滑动");
+                                if(Build.VERSION.SDK_INT>=26) {
+                                        Log.i(TAG, "使用触摸屏事件滑动");
                                         Path path = new Path();
                                         path.moveTo(800, 2200);
                                         path.lineTo(800, 400);
-                                        GestureDescription.StrokeDescription sd = new GestureDescription.StrokeDescription(path, 0, 200);
+                                        GestureDescription.StrokeDescription sd = new GestureDescription.StrokeDescription(path, 0, 200,false);
                                         dispatchGesture(new GestureDescription.Builder().addStroke(sd).build(), null, null);
                                         return;
                                     }else {
-
+                                    if(msroot) {
+                                        execShellCmd("input swipe 800 2200 800 400"); //滑动坐标
+                                        Log.i(TAG, "使用ADB命令滑动成功.");
+                                        return;
                                     }
                                 }
                             }
                         }
                     }
                 }catch (Exception ignored){}
-                break;
-            case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
                 break;
         }
     }
@@ -89,7 +83,7 @@ public class douyinserver extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         if(upgradeRootPermission(getPackageCodePath())) msroot = true;
-        Toast.makeText(this, "......抖音刷视频服务开启......", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "......抖音视频服务开启......", Toast.LENGTH_SHORT).show();
         super.onServiceConnected();
     }
     /**
@@ -97,7 +91,7 @@ public class douyinserver extends AccessibilityService {
      */
     @Override
     public boolean onUnbind(Intent intent) {
-        Toast.makeText(this, "抖音刷视频服务关闭", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "抖音视频服务关闭", Toast.LENGTH_SHORT).show();
         return super.onUnbind(intent);
     }
 }
