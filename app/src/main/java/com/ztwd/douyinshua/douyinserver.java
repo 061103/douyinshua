@@ -38,6 +38,7 @@ import static com.ztwd.douyinshua.StringTimeUtils.getTimeStr2;
  * */
 public class douyinserver extends AccessibilityService {
     private final static String TAG = "douyinserver";
+    private boolean find_it;
 
     @SuppressLint("ObsoleteSdkInt")
     @Override
@@ -57,7 +58,9 @@ public class douyinserver extends AccessibilityService {
                     if(toppackname !=null&& toppackname.equals("com.ss.android.ugc.aweme.lite")){
                         int sys_hh = (Integer.parseInt(getTimeStr2().substring(11, 12)) * 10) + Integer.parseInt(getTimeStr2().substring(12, 13));
                         if (sys_hh > 8 && sys_hh < 23) {
-                            if (findBottom(rootNode,"推荐")){
+                            findBottom(rootNode,"推荐");
+                            if (find_it){
+                                find_it=false;
                                 int ran = (int) (Math.random() * 12);//产生随机数
                                 int wait_sleep = ran * 1000;
                                 if (wait_sleep > 3000) {//最少停留页面3秒
@@ -98,23 +101,25 @@ public class douyinserver extends AccessibilityService {
      * 查找TextView控件
      * @param rootNode 根结点
      */
-    private boolean findBottom(AccessibilityNodeInfo rootNode , String str0) {
+    private void findBottom(AccessibilityNodeInfo rootNode , String str0) {
         int count = rootNode.getChildCount();
         try {
             for (int i = 0; i < count; i++) {
                 AccessibilityNodeInfo node = rootNode.getChild(i);
                 if (null != node.getClassName() && "android.widget.TextView".contains(node.getClassName())) {
                     String ls = (String) node.getText();
-                    Log.i(TAG, "node包含的信息:" + ls);
-                    if (ls != null && ls.contains(str0)) {
-                        Log.i(TAG, "<<=======确定包含=======>>:" + str0);
-                        return true;
+                    if (ls != null) {
+                        Log.i(TAG, "node包含的信息:" + ls);
+                        if (ls.contains(str0)) {
+                            Log.i(TAG, "<<=======确定包含=======>>:" + str0);
+                            find_it=true;
+                            return;
+                        }
                     }
                 }
                 findBottom(node, str0);
             }
         }catch (Exception ignored){}
-        return false;
     }
     /**
      * 判断  用户查看使用情况的权利是否给予app
