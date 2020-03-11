@@ -445,4 +445,5 @@ public class AccessibilityHelper {
         }
         return false;
     }
+
 }
