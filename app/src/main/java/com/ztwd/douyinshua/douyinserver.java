@@ -74,7 +74,7 @@ public class douyinserver extends AccessibilityService {
                                         }
                                     }
                                 }
-                            }
+                            }else execShellCmd("am force-stop com.ss.android.ugc.aweme.lite");
                         }
                     }catch (Exception ignored){}
                     break;
