@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:description="@string/accessibility_service_description"
     android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFeedbackType="feedbackGeneric"
@@ -8,4 +9,5 @@
     android:canRetrieveWindowContent="true"
     android:canPerformGestures="true"
     android:keepScreenOn="true"
-    android:packageNames="com.ss.android.ugc.aweme.lite"/>
+    android:packageNames="com.ss.android.ugc.aweme.lite"
+    tools:targetApi="n" />

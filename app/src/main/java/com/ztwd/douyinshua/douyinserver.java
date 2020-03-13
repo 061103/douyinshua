@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
-import android.app.AppOpsManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
@@ -24,26 +23,14 @@ import java.util.TreeMap;
 
 import static com.ztwd.douyinshua.AccessibilityHelper.execShellCmd;
 import static com.ztwd.douyinshua.AccessibilityHelper.sleepTime;
-import static com.ztwd.douyinshua.AccessibilityHelper.upgradeRootPermission;
 import static com.ztwd.douyinshua.StringTimeUtils.getTimeStr2;
 
-/**
- *  抖音广告页面的activity：com.ss.android.excitingvideo.ExcitingVideoActivity
- *  抖音主页面的activity：com.ss.android.ugc.aweme.main.MainActivity
- *  抖音视频页面计时ID：com.ss.android.ugc.aweme.lite:id/aoz
- *  来赚钱ID：com.ss.android.ugc.aweme.lite:id/ke
- *  点赞ID：com.ss.android.ugc.aweme.lite:id/a4m
- *  加关注ID:com.ss.android.ugc.aweme.lite:id/a4k
- *  整个视频页面ID：com.ss.android.ugc.aweme.lite:id/a40
- * */
 public class douyinserver extends AccessibilityService {
     private final static String TAG = "douyinserver";
-    private boolean find_it;
-
     @SuppressLint("ObsoleteSdkInt")
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-//注意这个方法回调，是在主线程，不要在这里执行耗时操作
+    //注意这个方法回调，是在主线程，不要在这里执行耗时操作
         int eventType = event.getEventType();
         AccessibilityNodeInfo rootNode = getRootInActiveWindow();
         switch (eventType) {
@@ -58,15 +45,13 @@ public class douyinserver extends AccessibilityService {
                     if(toppackname !=null&& toppackname.equals("com.ss.android.ugc.aweme.lite")){
                         int sys_hh = (Integer.parseInt(getTimeStr2().substring(11, 12)) * 10) + Integer.parseInt(getTimeStr2().substring(12, 13));
                         if (sys_hh > 8 && sys_hh < 23) {
-                            findBottom(rootNode,"推荐");
-                            if (find_it){
-                                find_it=false;
-                                int ran = (int) (Math.random() * 12);//产生随机数
-                                int wait_sleep = ran * 1000;
-                                if (wait_sleep > 3000) {//最少停留页面3秒
-                                    Log.i(TAG, "延时：" + wait_sleep/1000 + "秒！");
-                                    sleepTime(wait_sleep);
-                                    Log.i(TAG, "延时完成准备滑动");
+                            if (findBottom(rootNode,"首页")){
+                                int ran = (int) (Math.random() * 15) + 1;//产生1--15随机数
+                                if (ran > 3) {//最少停留页面3秒
+                                    for(int i=ran;i>=0;i--){
+                                        sleepTime(1000);
+                                        Log.i(TAG, "滑动倒计时:" + i);
+                                    }
                                     if(Build.VERSION.SDK_INT>=26) {
                                         Log.i(TAG, "使用触摸屏事件滑动");
                                         Path path = new Path();
@@ -76,14 +61,13 @@ public class douyinserver extends AccessibilityService {
                                         dispatchGesture(new GestureDescription.Builder().addStroke(sd).build(), null, null);
                                         return;
                                     }else {
-                                        if(upgradeRootPermission(getPackageCodePath())) {
-                                            int ran1 = (int) (Math.random() * 40);//产生随机数
-                                            if(ran1<30) {
-                                                execShellCmd("input swipe 800 2200 800 400"); //滑动坐标
+                                        int ran1 = (int) (Math.random() * 40) + 1;//产生1--40随机数
+                                            if(ran1<35) {
+                                                execShellCmd("input swipe 800 1600 800 500"); //滑动坐标
                                                 Log.i(TAG, "使用ADB命令下滑成功.");
                                                 return;
                                             }else {
-                                                execShellCmd("input swipe 800 400 800 2200"); //滑动坐标
+                                                execShellCmd("input swipe 800 500 800 1600"); //滑动坐标
                                                 Log.i(TAG, "使用ADB命令上滑成功.");
                                                 return;
                                             }
@@ -92,16 +76,15 @@ public class douyinserver extends AccessibilityService {
                                 }
                             }
                         }
-                    }
-                }catch (Exception ignored){}
-                break;
-        }
-    }
+                    }catch (Exception ignored){}
+                    break;
+                }
+            }
     /**
      * 查找TextView控件
      * @param rootNode 根结点
      */
-    private void findBottom(AccessibilityNodeInfo rootNode , String str0) {
+    private static boolean findBottom(AccessibilityNodeInfo rootNode , String str0) {
         int count = rootNode.getChildCount();
         try {
             for (int i = 0; i < count; i++) {
@@ -112,29 +95,33 @@ public class douyinserver extends AccessibilityService {
                         Log.i(TAG, "node包含的信息:" + ls);
                         if (ls.contains(str0)) {
                             Log.i(TAG, "<<=======确定包含=======>>:" + str0);
-                            find_it=true;
-                            return;
+                            return true;
                         }
                     }
                 }
-                findBottom(node, str0);
+                if(findBottom(node, str0)){
+                    return true;
+                }
             }
         }catch (Exception ignored){}
+        return false;
     }
+
     /**
-     * 判断  用户查看使用情况的权利是否给予app
-     * @return booble/false
+     * 判断调用该设备中“有权查看使用权限的应用”这个选项的APP有没有打开
+     * @return true/false
      */
     @SuppressLint("ObsoleteSdkInt")
-    private boolean isUseGranted() {
-        Context appContext = getApplicationContext();
-        AppOpsManager appOps = (AppOpsManager) appContext.getSystemService(Context.APP_OPS_SERVICE);
-        int mode = -1;
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            mode = appOps.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), appContext.getPackageName());
+    private boolean isUsageStatsServiceOpen() {
+        List<UsageStats> queryUsageStats = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+            queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, 0, System.currentTimeMillis());
         }
-        boolean granted = mode == AppOpsManager.MODE_ALLOWED;
-        return granted;
+        if (queryUsageStats == null || queryUsageStats.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -195,7 +182,7 @@ public class douyinserver extends AccessibilityService {
     protected void onServiceConnected() {
         int apis = Build.VERSION.SDK_INT;
         Log.i(TAG, "当前API等级:"+apis);
-        if (!isUseGranted()) {
+        if (!isUsageStatsServiceOpen()) {
             //开启应用授权界面
             Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

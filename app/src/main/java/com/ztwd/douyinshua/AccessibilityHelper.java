@@ -2,6 +2,7 @@ package com.ztwd.douyinshua;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -126,7 +127,7 @@ public class AccessibilityHelper {
     }
 
     //通过id查找
-    public static AccessibilityNodeInfo findNodeInfosById(String resId) {
+    private static AccessibilityNodeInfo findNodeInfosById(String resId) {
         if (mService.getRootInActiveWindow() != null) {
             List<AccessibilityNodeInfo> list = mService.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(resId);
             if (list != null && !list.isEmpty()) {
@@ -158,6 +159,7 @@ public class AccessibilityHelper {
     }
 
     //返回指定位置的node
+    @SuppressLint("ObsoleteSdkInt")
     public static AccessibilityNodeInfo findNodeInfosByIdAndPosition(AccessibilityNodeInfo nodeInfo, String resId, int position) {
         if (nodeInfo == null) return null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -194,7 +196,7 @@ public class AccessibilityHelper {
     }
 
     //通过ClassName查找
-    public static AccessibilityNodeInfo findNodeInfosByClassName(AccessibilityNodeInfo nodeInfo, String className) {
+    private static AccessibilityNodeInfo findNodeInfosByClassName(AccessibilityNodeInfo nodeInfo, String className) {
         if (TextUtils.isEmpty(className)) {
             return null;
         }
@@ -234,7 +236,7 @@ public class AccessibilityHelper {
     /**
      * 找父组件
      */
-    public static AccessibilityNodeInfo findParentNodeInfosByClassName(AccessibilityNodeInfo nodeInfo, String className) {
+    private static AccessibilityNodeInfo findParentNodeInfosByClassName(AccessibilityNodeInfo nodeInfo, String className) {
         if (nodeInfo == null) {
             return null;
         }
@@ -272,6 +274,7 @@ public class AccessibilityHelper {
         return -1;
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     public static String getViewIdResourceName(AccessibilityNodeInfo nodeInfo) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             return nodeInfo.getViewIdResourceName();
@@ -307,7 +310,7 @@ public class AccessibilityHelper {
     /**
      * 点击事件
      */
-    public static void performClick(AccessibilityNodeInfo nodeInfo) {
+    private static void performClick(AccessibilityNodeInfo nodeInfo) {
         if (nodeInfo == null) {
             return;
         }
@@ -383,7 +386,7 @@ public class AccessibilityHelper {
     /**
      * 延时MS
      */
-    public static void sleepTime(int ms) {
+    static void sleepTime(int ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
@@ -396,7 +399,7 @@ public class AccessibilityHelper {
      execShellCmd("input tap 168 252");点击某坐标
      execShellCmd("input swipe 100 250 200 280"); 滑动坐标
      */
-    public static void execShellCmd(String cmd) {
+    static void execShellCmd(String cmd) {
         try {
             // 申请获取root权限，这一步很重要，不然会没有作用
             Process process = Runtime.getRuntime().exec("su");
@@ -411,39 +414,6 @@ public class AccessibilityHelper {
             t.printStackTrace();
         }
     }
-    /**
-     * 应用程序运行命令获取 Root权限，设备必须已破解(获得ROOT权限)
-     *
-     * @return 应用程序是/否获取Root权限
-     */
-    public static boolean upgradeRootPermission(String pkgCodePath) {
-        Process process = null;
-        DataOutputStream os = null;
-        try {
-            String cmd="chmod 777 " + pkgCodePath;
-            process = Runtime.getRuntime().exec("su"); //切换到root帐号
-            os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            process.waitFor();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            try {
-                if (os != null) {
-                    os.close();
-                }
-                process.destroy();
-            } catch (Exception e) {
-            }
-        }
-        try {
-            return process.waitFor()==0;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+
 
 }
